@@ -1,11 +1,11 @@
 "use server";
 
-import { docs } from "@/app/mock/documents";
+// import { docs= } from "@/app/mock/documents";
 import DocumentCard from "./DocCard";
 
 // Read the query params and make a fecth
 const DocsGrid = ({ query }: { query: string }) => {
-  const results = new Promise((res) => res(docs));
+  // const results = new Promise((res) => res(docs));
   return (
     <section className="mt-20">
       <span className="flex items-baseline gap-4 mb-8">
@@ -13,7 +13,7 @@ const DocsGrid = ({ query }: { query: string }) => {
         <p className="text-gray-600">results</p>
       </span>
       <div className="flex flex-col gap-3">
-        {docs.map((doc) => {
+        {[].map((doc) => {
           const { author, createdAt, fileUrl, institution, title } = doc;
           return (
             <DocumentCard

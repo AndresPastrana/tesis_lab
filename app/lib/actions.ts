@@ -1,7 +1,7 @@
 "use server";
-import { isValidPersonInfo, validateCi } from "../helpers/validators";
+import { isValidProfesorInfo, isValidStudentInfo } from "../helpers/validators";
 import { caluculateAge } from "../helpers/age";
-import { Profesor } from "./models/Mongoose";
+import { Profesor, Student } from "./models/Mongoose";
 import dbConnect from "./dbConnect";
 import { redirect } from "next/navigation";
 import {
@@ -11,7 +11,7 @@ import {
   isEmailUniqueExclude,
 } from "../helpers/dbValidators";
 import { revalidatePath } from "next/cache";
-import { toast } from "sonner";
+
 export type State = {
   errors?: {
     ci?: string[];
@@ -26,9 +26,24 @@ export type State = {
   message?: string | null;
 };
 
+export type StudentFormState = {
+  errors?: {
+    ci?: string[];
+    name?: string[];
+    lastname?: string[];
+    email?: string[];
+    phone?: string[];
+    address?: string[];
+    sex?: string[];
+    tutor?: string[];
+  };
+  message?: string | null;
+};
+
+// Profesor Actions
 export async function addProfesor(prevState: State, formData: FormData) {
   // Validate using Zod
-  const validation = isValidPersonInfo(formData);
+  const validation = isValidProfesorInfo(formData);
 
   if (!validation.success) {
     return {
@@ -73,7 +88,7 @@ export async function ediProfesor(
   formData: FormData
 ) {
   //Static validations
-  const validation = isValidPersonInfo(formData);
+  const validation = isValidProfesorInfo(formData);
   if (!validation.success) {
     return {
       errors: validation.error.flatten().fieldErrors,
@@ -124,4 +139,46 @@ export async function deleteProfesorById(id: string): Promise<void> {
 
     throw new Error(`Error al eliminar el profesor`);
   }
+}
+
+// Student Actions
+export async function addStudent(
+  _prevState: StudentFormState,
+  formData: FormData
+) {
+  // Validate using Zod
+
+  const validation = isValidStudentInfo(formData);
+
+  if (!validation.success) {
+    return {
+      errors: validation.error.flatten().fieldErrors,
+      message: "Campos incorrectos. Fallo al crear el nuevo estudiante ",
+    };
+  }
+
+  const { tutor, ci, email } = validation.data;
+
+  const age = caluculateAge(ci);
+
+  try {
+    // Db validations
+    await Promise.all([isCiUnique(ci), isEmailUnique(email)]);
+
+    await dbConnect();
+    await Student.create({
+      ...validation.data,
+      tutor_id: tutor,
+      ci,
+      email,
+      age,
+    });
+  } catch (error) {
+    const err = error as Error;
+    return {
+      message: `${err.name} ${err.message}`,
+    };
+  }
+  revalidatePath("/dashboard/personas/estudiantes");
+  redirect("/dashboard/personas/estudiantes");
 }

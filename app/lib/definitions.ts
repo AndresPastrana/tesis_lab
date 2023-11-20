@@ -1,4 +1,4 @@
-import mongoose, { Schema } from "mongoose";
+import { Schema } from "mongoose";
 import {
   CourtRole,
   Degree,
@@ -39,11 +39,6 @@ interface TesisWorkShop extends Event {
     comments: string[];
   }[];
 }
-
-type Student = {
-  tutor_id: string;
-  academic_doc_id: string;
-};
 
 type CourtMember = {
   profesor: string;
@@ -90,6 +85,11 @@ export interface ProfesorType {
   academic_rank: RangoAcademico;
 }
 
+export interface StudentType {
+  tutor_id: string | Schema.Types.ObjectId;
+  // academic_doc_id: string | Schema.Types.ObjectId;
+}
+
 export type CourtType = {
   id: string;
   name: string; // Nombre del tribunal
@@ -104,17 +104,6 @@ type ThesisWorkshopType = {
   date: Date; //When current date u date all the tesis workoshp with the status = "open" -> "in=progress"   current date = date+1 "in-progress" -> "closed"
   objectives: string[];
   status: "open" | "in-progress" | "closed";
-};
-
-// Types for Schemas
-export type StudentSchemaType = Omit<
-  Student,
-  "person_info_id" | "tutor_id" | "academic_doc_id"
-> & {
-  // Primary Key, Auto-generated, Unique Identifier
-  person_info_id: Schema.Types.ObjectId;
-  tutor_id: Schema.Types.ObjectId;
-  academic_doc_id: Schema.Types.ObjectId;
 };
 
 export type EventSchemaType = Omit<Event, "court_id" | "participants"> & {

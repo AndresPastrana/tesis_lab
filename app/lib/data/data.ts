@@ -1,8 +1,21 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { Profesor } from "../models/Mongoose";
+import { Profesor, Student } from "../models/Mongoose";
 import dbConnect from "../dbConnect";
 import { Document, Model, FilterQuery } from "mongoose";
 const MAX_RESULTS_SEARCH = 10;
+
+function getPersonQueryFilters(regExp: RegExp) {
+  return [
+    { ci: { $regex: regExp } },
+    { name: { $regex: regExp } },
+    { lastname: { $regex: regExp } },
+    { address: { $regex: regExp } },
+    { email: { $regex: regExp } },
+    { phone: { $regex: regExp } },
+    { sex: { $regex: regExp } },
+  ];
+}
+
 type Professor = {
   id: string;
   ci: string;
@@ -16,7 +29,21 @@ type Professor = {
   academic_rank: string;
 };
 
+type Student = {
+  ci: string;
+  name: string;
+  lastname: string;
+  address: string;
+  email: string;
+  phone: string;
+  sex: string;
+  age: number;
+  tutor: string;
+  // Add other properties as needed
+};
+
 type ProfessorsTable = Professor[];
+type StudentTable = Student[];
 
 export async function fetchFilteredProfesors(
   query: string,
@@ -25,21 +52,13 @@ export async function fetchFilteredProfesors(
   noStore(); //No cache the request
 
   try {
-    // await new Promise((res, rej) => setTimeout(res, 5000));
     const regExp = new RegExp(query, "i");
-    // await new Promise((res, rej) => setTimeout(res, 5000));
     const filter =
       query === ""
         ? {}
         : {
             $or: [
-              { ci: { $regex: regExp } },
-              { name: { $regex: regExp } },
-              { lastname: { $regex: regExp } },
-              { address: { $regex: regExp } },
-              { email: { $regex: regExp } },
-              { phone: { $regex: regExp } },
-              { sex: { $regex: regExp } },
+              ...getPersonQueryFilters(regExp),
               { academic_rank: { $regex: regExp } },
             ],
           };
@@ -54,6 +73,28 @@ export async function fetchFilteredProfesors(
   } catch (error) {
     console.error("Database Error:", error);
     throw new Error("Fallo al buscar profesores.");
+  }
+}
+
+export async function fetchFilteredStudents(query: string) {
+  const regExp = new RegExp(query, "i");
+  const filter =
+    query === ""
+      ? {}
+      : {
+          $or: [...getPersonQueryFilters(regExp)],
+        };
+  await dbConnect();
+  try {
+    // Example: Fetching students with age less than 25 and limiting the result
+    const filteredStudents =
+      await Student.find(filter).limit(MAX_RESULTS_SEARCH);
+
+    return filteredStudents;
+  } catch (error) {
+    // Handle errors here
+    console.error("Error fetching filtered students:", error);
+    throw error;
   }
 }
 

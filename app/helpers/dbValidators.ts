@@ -1,12 +1,12 @@
 import dbConnect from "../lib/dbConnect";
-import { Profesor } from "../lib/models/Mongoose";
+import { Person } from "../lib/models/Mongoose";
 import { DuplicateCiError, DuplicateEmailError } from "./errors";
 
 export async function isCiUnique(ci: string): Promise<boolean> {
   await dbConnect();
-  const profesor = await Profesor.findOne({ ci });
+  const person = await Person.findOne({ ci });
 
-  if (profesor) {
+  if (person) {
     throw new DuplicateCiError(ci);
   }
 
@@ -15,9 +15,9 @@ export async function isCiUnique(ci: string): Promise<boolean> {
 
 export async function isEmailUnique(email: string): Promise<boolean> {
   await dbConnect();
-  const profesor = await Profesor.findOne({ email });
+  const person = await Person.findOne({ email });
 
-  if (profesor) {
+  if (person) {
     throw new DuplicateEmailError(email);
   }
 
@@ -29,9 +29,9 @@ export async function isEmailUniqueExclude(
   id: string
 ): Promise<boolean> {
   await dbConnect();
-  const profesor = await Profesor.findOne({ email, _id: { $ne: id } });
+  const person = await Person.findOne({ email, _id: { $ne: id } });
 
-  if (profesor) {
+  if (person) {
     throw new DuplicateEmailError(email);
   }
 
@@ -43,9 +43,9 @@ export async function isCiUniqueExclude(
   id: string
 ): Promise<boolean> {
   await dbConnect();
-  const profesor = await Profesor.findOne({ ci, _id: { $ne: id } });
+  const person = await Person.findOne({ ci, _id: { $ne: id } });
 
-  if (profesor) {
+  if (person) {
     throw new DuplicateCiError(ci);
   }
 

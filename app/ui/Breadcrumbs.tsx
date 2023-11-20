@@ -20,16 +20,22 @@ const Breadcrumbs: FC<CrumbsItems> = ({ items }) => {
           const key = `${pathname}-bredcrumb-${
             href ?? "last"
           }-${label.toLowerCase()}`;
-          console.log(key);
 
           return (
             <>
               {href && (
-                <li key={key}>
+                <li
+                  key={key}
+                  className="mx-1 text-gray-800 font-medium bg-gray-100 px-3 py-1 rounded-3xl"
+                >
                   <Link href={href}>{label}</Link>
                 </li>
               )}
-              {!href && <li className="btn-disabled">{label}</li>}
+              {!href && (
+                <li className="border rounded-3xl px-3 py-1 border-gray-100 btn-disabled">
+                  {label}
+                </li>
+              )}
             </>
           );
         })}

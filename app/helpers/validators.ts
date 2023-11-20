@@ -94,6 +94,83 @@ const ProfesorSchema = z.object({
     }
   ),
 });
+const StudentSchema = z.object({
+  ci: z
+    .string()
+    .trim()
+    .refine(
+      (data) => {
+        return validateCi(data);
+      },
+      { message: "Formato del carnet de indentidad no valdio" }
+    ),
+  name: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine((data) => data.length > 0, {
+      message: "El nombre debe tener una longitud mayor a 0.",
+    })
+    .refine(
+      (data) => {
+        // Permitir hasta dos partes en el nombre separadas por un espacio
+        const nameParts = data.trim().split(" ");
+        return (
+          nameParts.length <= 2 && nameParts.every((part) => part.length > 0)
+        );
+      },
+      {
+        message:
+          "El nombre debe consistir en máximo dos cadenas de texto separadas por un espacio.",
+      }
+    ),
+  lastname: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .refine((data) => data.length > 0, {
+      message: "El apellido debe tener una longitud mayor a 0.",
+    })
+    .refine(
+      (data) => {
+        // Permitir hasta dos partes en el apellido separadas por un espacio
+        const apellidoParts = data.trim().split(" ");
+        return (
+          apellidoParts.length <= 2 &&
+          apellidoParts.every((part) => part.length > 0)
+        );
+      },
+      {
+        message:
+          "Los apellidos deben ser máximo dos cadenas de texto separadas por un espacio.",
+      }
+    ),
+
+  email: z
+    .string()
+    .trim()
+    .refine((data) => emailRegex.test(data), {
+      message: "El formato del correo electrónico no es válido.",
+    }),
+  phone: z
+    .string()
+    .trim()
+    .refine((data) => phoneRegex.test(data), {
+      message: "El número de teléfono debe contener exactamente 8 dígitos.",
+    }),
+  address: z
+    .string()
+    .trim()
+    .refine((data) => data.length > 10, {
+      message: "La direccion debe ser mas descriptiva",
+    }),
+  sex: z.enum([Sex.Female, Sex.Male], {
+    invalid_type_error: `Sexo debe ser uno de ${Object.values(Sex).join(",")}`,
+  }),
+  tutor: z.string({
+    invalid_type_error: `Sexo debe ser uno de ${Object.values(Sex).join(",")}`,
+  }),
+});
 
 function validateYear(year: string) {
   const parsedYear = parseInt(year);
@@ -136,7 +213,7 @@ export function validateCi(ci: string) {
   return true;
 }
 
-export function isValidPersonInfo(formData: FormData) {
+export function isValidProfesorInfo(formData: FormData) {
   return ProfesorSchema.safeParse({
     ci: formData.get("ci"),
     name: formData.get("name"),
@@ -146,5 +223,18 @@ export function isValidPersonInfo(formData: FormData) {
     address: formData.get("address"),
     sex: formData.get("sex"),
     categoria: formData.get("categoria"),
+  });
+}
+
+export function isValidStudentInfo(formData: FormData) {
+  return StudentSchema.safeParse({
+    ci: formData.get("ci"),
+    name: formData.get("name"),
+    lastname: formData.get("lastname"),
+    email: formData.get("email"),
+    phone: formData.get("phone"),
+    address: formData.get("address"),
+    sex: formData.get("sex"),
+    tutor: formData.get("tutor"),
   });
 }

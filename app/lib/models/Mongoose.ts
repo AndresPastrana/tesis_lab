@@ -1,10 +1,10 @@
 import mongoose, { HydratedDocument, Model } from "mongoose";
-import { PersonType, ProfesorType } from "../definitions";
+import { PersonType, ProfesorType, StudentType } from "../definitions";
 import { RangoAcademico, Sex } from "@/app/const";
 
 interface Person extends PersonType, mongoose.Document {}
 interface Profesor extends Person, ProfesorType {}
-
+interface Student extends Person, StudentType {}
 const PersonSchema = new mongoose.Schema<Person>({
   ci: { type: String, maxlength: 11, required: true },
   name: { type: String, required: true, lowercase: true },
@@ -34,23 +34,29 @@ const ProfesorSchema = new mongoose.Schema<Profesor>(
   }
 );
 
-// const StudentSchema = new mongoose.Schema<StudentSchemaType>({
-//   person_info_id: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: "PersonInfo",
-//     required: true,
-//   },
-//   tutor_id: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: "Profesor",
-//     required: true,
-//   },
-//   academic_doc_id: {
-//     type: mongoose.Schema.Types.ObjectId,
-//     ref: "AcademicDoc",
-//     required: true,
-//   },
-// });
+const StudentSchema = new mongoose.Schema<Student>(
+  {
+    tutor_id: {
+      type: mongoose.Schema.Types.ObjectId,
+      required: true,
+      ref: "Profesor",
+    }, // Assuming there is a Tutor model
+    // academic_doc_id: {
+    //   type: mongoose.Schema.Types.ObjectId,
+    //   required: true,
+    //   ref: "AcademicDocument",
+    // }, // Assuming there is an AcademicDocument model
+    // Add other properties based on the StudentType interface
+  },
+  {
+    methods: {
+      toJSON: function (this) {
+        const { __v, _id, id, ...rest } = this.toObject();
+        return { id: _id.toString(), ...rest };
+      },
+    },
+  }
+);
 
 // const AcademicDocSchema = new mongoose.Schema<AcademicDocType>({
 //   title: { type: String, required: true },
@@ -98,83 +104,15 @@ const ProfesorSchema = new mongoose.Schema<Profesor>(
 //   ],
 // });
 
-// const EventSchema = new mongoose.Schema<EventSchemaType>(
-//   {
-//     court_id: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "Court",
-//       required: true,
-//     },
-//     date: { type: Date, required: true },
-//     title: { type: String, required: true },
-//     participants: [
-//       {
-//         student: {
-//           type: mongoose.Schema.Types.ObjectId,
-//           ref: "Student",
-//           required: true,
-//         },
-//         evaluated: { type: Boolean, default: false },
-//       },
-//     ],
-//     status: {
-//       type: String,
-//       enum: ["open", "in-progress", "closed"],
-//       required: true,
-//     },
-
-//     type: {
-//       type: String,
-//       enum: ["defense", "pre-defense", "thesis-workshop"],
-//       required: true,
-//     },
-//   },
-//   { discriminatorKey: "kind" }
-// );
-
-// const TesisDefenseSchema = new mongoose.Schema(
-//   {
-//     criteria: [
-//       {
-//         type: mongoose.Schema.Types.ObjectId,
-//         ref: "Criterion",
-//         required: true,
-//       },
-//     ],
-//     evaluations: [
-//       {
-//         student: {
-//           type: mongoose.Schema.Types.ObjectId,
-//           ref: "Student",
-//           required: true,
-//         },
-//         criteriaScores: { type: Map, of: Number },
-//         totalScore: Number,
-//         documentUrl: { type: String, default: undefined }, // Para defensa
-//       },
-//     ],
-//   },
-//   { discriminatorKey: "kind" }
-// );
-
-// // Tesis Workshop specific
-// const TesisWorkshopSchema = new mongoose.Schema(
-//   {
-//     objectives: { type: [String], require: true },
-//     observations: [
-//       {
-//         student_id: { type: mongoose.Schema.Types.ObjectId, ref: "Student" },
-//         comments: { type: [String] },
-//       },
-//     ], // Para talleres de tesis
-//   },
-//   { discriminatorKey: "kind" }
-// );
-
 // Models Here
-const Person =
+
+export const Person =
   mongoose.models.Person || mongoose.model<Person>("Person", PersonSchema);
 
 export const Profesor: Model<Profesor> =
   mongoose.models.Person.discriminators?.["Profesor"] ||
   Person.discriminator("Profesor", ProfesorSchema);
+
+export const Student: Model<Student> =
+  mongoose.models.Person.discriminators?.["Student"] ||
+  Person.discriminator("Student", StudentSchema);
