@@ -5,7 +5,7 @@ import {
   TrashIcon,
   BellAlertIcon,
 } from "@heroicons/react/24/outline";
-import { deleteProfesorById } from "@/app/lib/actions";
+import { deleteStudentById } from "@/app/lib/actions";
 import { toast } from "sonner";
 
 export const Cancel = ({ href }: { href: string }) => {
@@ -39,9 +39,9 @@ export const Edit = ({ href }: { href: string }) => {
 
 export const Delete = ({ id }: { id: string }) => {
   const handleDelete = () => {
-    toast("Estas seguro que desea eliminar este profesor ?", {
+    toast("Estas seguro que desea eliminar este estudiante ?", {
       description:
-        "Elimminar este prpfesor pued implicar cambios inseperados en el sistema.Un profesor puede estar vinculados a varios estudiantes y eventos",
+        "Elimminar este estudiante puede implicar cambios inseperados en el sistema.Un estdiante puede estar vinculado a varios eventos en proceso",
       className: "text-gray-900",
       duration: 60000,
       actionButtonStyle: {
@@ -51,10 +51,10 @@ export const Delete = ({ id }: { id: string }) => {
       },
       action: {
         label: "Estoy seguro",
-        onClick: () => deleteProfesorById(id),
+        onClick: () => deleteStudentById(id),
       },
 
-      descriptionClassName: "py-2 ",
+      descriptionClassName: "py-1",
 
       cancel: {
         label: "Cancelar",

@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { RangoAcademico, Sex } from "../const";
+import { CourtRole, RangoAcademico, Sex } from "../const";
 const emailRegex = /^[a-zA-Z0-9._-]+@(upr\.cu|gmail\.com)$/;
 const phoneRegex = /^[0-9]{8}$/;
 
@@ -172,6 +172,22 @@ const StudentSchema = z.object({
   }),
 });
 
+const CourtMemberSchema = z.object({
+  profesor: z.string().refine((value) => value.trim() !== "", {
+    message: "El nombre del profesor no puede estar vacío",
+  }),
+  role: z.enum([CourtRole.Presidente, CourtRole.Secretario, CourtRole.Vocal], {
+    invalid_type_error: "Tipo de rol no válido",
+  }),
+});
+
+const CourtSchema = z.object({
+  name: z.string().min(1, { message: "El nombre no puede estar vacío" }),
+  members: z.array(CourtMemberSchema),
+});
+
+export type CourtFormData = z.infer<typeof CourtSchema>;
+
 function validateYear(year: string) {
   const parsedYear = parseInt(year);
   if (parsedYear >= 0 && parsedYear <= 99) {
@@ -237,4 +253,8 @@ export function isValidStudentInfo(formData: FormData) {
     sex: formData.get("sex"),
     tutor: formData.get("tutor"),
   });
+}
+
+export function isValidCourtData(data: any) {
+  return CourtSchema.parse(data);
 }

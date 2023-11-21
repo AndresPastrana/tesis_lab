@@ -10,6 +10,7 @@ export default function SearchBar({ placeholder }: { placeholder: string }) {
 
   const hanldeSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     const params = new URLSearchParams(current_params);
+    params.set("page", "1");
     if (e.target.value !== "") {
       params.set("query", e.target.value);
     } else {

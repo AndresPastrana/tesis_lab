@@ -1,10 +1,17 @@
-import mongoose, { HydratedDocument, Model } from "mongoose";
-import { PersonType, ProfesorType, StudentType } from "../definitions";
-import { RangoAcademico, Sex } from "@/app/const";
+import mongoose, { Model } from "mongoose";
+import {
+  CourtType,
+  PersonType,
+  ProfesorType,
+  StudentType,
+} from "../definitions";
+import { CourtRole, RangoAcademico, Sex } from "@/app/const";
 
 interface Person extends PersonType, mongoose.Document {}
 interface Profesor extends Person, ProfesorType {}
 interface Student extends Person, StudentType {}
+interface Court extends mongoose.Document, CourtType {}
+
 const PersonSchema = new mongoose.Schema<Person>({
   ci: { type: String, maxlength: 11, required: true },
   name: { type: String, required: true, lowercase: true },
@@ -47,6 +54,26 @@ const StudentSchema = new mongoose.Schema<Student>(
     //   ref: "AcademicDocument",
     // }, // Assuming there is an AcademicDocument model
     // Add other properties based on the StudentType interface
+  },
+  {
+    methods: {
+      toJSON: function (this) {
+        const { __v, _id, id, ...rest } = this.toObject();
+        return { id: _id.toString(), ...rest };
+      },
+    },
+  }
+);
+
+const CourtSchema = new mongoose.Schema<Court>(
+  {
+    name: String,
+    members: [
+      {
+        profesor: { type: mongoose.Schema.Types.ObjectId, ref: "Profesor" },
+        role: { type: String, enum: Object.values(CourtRole) },
+      },
+    ],
   },
   {
     methods: {
@@ -116,3 +143,6 @@ export const Profesor: Model<Profesor> =
 export const Student: Model<Student> =
   mongoose.models.Person.discriminators?.["Student"] ||
   Person.discriminator("Student", StudentSchema);
+
+export const Court =
+  mongoose.models.Court || mongoose.model<Court>("Court", CourtSchema);

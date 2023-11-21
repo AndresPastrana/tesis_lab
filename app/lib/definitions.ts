@@ -41,7 +41,7 @@ interface TesisWorkShop extends Event {
 }
 
 type CourtMember = {
-  profesor: string;
+  profesor: string | Schema.Types.ObjectId;
   role: CourtRole;
 };
 export type AcademicDocType = {
@@ -86,15 +86,14 @@ export interface ProfesorType {
 }
 
 export interface StudentType {
-  tutor_id: string | Schema.Types.ObjectId;
+  tutor_id: string | Schema.Types.ObjectId | { _id: string; name: string };
   // academic_doc_id: string | Schema.Types.ObjectId;
 }
 
-export type CourtType = {
-  id: string;
+export interface CourtType {
   name: string; // Nombre del tribunal
   members: CourtMember[]; // Lista de profesores que forman parte del tribunal y su role
-};
+}
 
 type ThesisWorkshopType = {
   id: string;
@@ -115,3 +114,4 @@ export type EventSchemaType = Omit<Event, "court_id" | "participants"> & {
 };
 
 export type ProfesorForm = PersonType & ProfesorType;
+export type StudentForm = PersonType & StudentType;

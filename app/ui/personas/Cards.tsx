@@ -18,7 +18,7 @@ const cardItems: Array<LinkCardItem> = [
     src: "/img/taller.jpg",
     title: "Tribunales",
     text: "dentro de la seccion estudiante podra blaa bla bla,dentro de la seccion estudiante podra blaa bla bla",
-    href: "/dashboard/personas/estudiantes",
+    href: "/dashboard/personas/tribunales",
   },
 ];
 {

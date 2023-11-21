@@ -1,8 +1,17 @@
 import { unstable_noStore as noStore } from "next/cache";
-import { Profesor, Student } from "../models/Mongoose";
+import { Types } from "mongoose";
+import { Court, Profesor, Student } from "../models/Mongoose";
 import dbConnect from "../dbConnect";
-import { Document, Model, FilterQuery } from "mongoose";
-const MAX_RESULTS_SEARCH = 10;
+import {
+  Document,
+  Model,
+  FilterQuery,
+  Schema,
+  mongo,
+  Mongoose,
+} from "mongoose";
+import { CourtRole } from "@/app/const";
+const MAX_RESULTS_SEARCH = 4;
 
 function getPersonQueryFilters(regExp: RegExp) {
   return [
@@ -29,7 +38,8 @@ type Professor = {
   academic_rank: string;
 };
 
-type Student = {
+export type Student = {
+  id: string;
   ci: string;
   name: string;
   lastname: string;
@@ -38,12 +48,33 @@ type Student = {
   phone: string;
   sex: string;
   age: number;
-  tutor: string;
+  tutor: {
+    _id: string;
+    name: string;
+  };
   // Add other properties as needed
 };
 
-type ProfessorsTable = Professor[];
+export type Court = {
+  id: string;
+  name: string;
+  members: { profesor: { _id: string; name: string }; role: CourtRole }[];
+};
+
 type StudentTable = Student[];
+type ProfessorsTable = Professor[];
+
+export async function fecthAllProfessors() {
+  try {
+    await dbConnect();
+    const profesors = await Profesor.find({});
+    return profesors as ProfessorsTable;
+  } catch (error) {
+    console.log(error);
+
+    throw new Error(`Error cargando los profesores`);
+  }
+}
 
 export async function fetchFilteredProfesors(
   query: string,
@@ -52,6 +83,8 @@ export async function fetchFilteredProfesors(
   noStore(); //No cache the request
 
   try {
+    const offset = (page - 1) * MAX_RESULTS_SEARCH;
+
     const regExp = new RegExp(query, "i");
     const filter =
       query === ""
@@ -67,7 +100,9 @@ export async function fetchFilteredProfesors(
     const resultFromQuery = (await Profesor.find({
       ...filter,
       __t: "Profesor",
-    }).limit(MAX_RESULTS_SEARCH)) as ProfessorsTable;
+    })
+      .skip(offset)
+      .limit(MAX_RESULTS_SEARCH)) as ProfessorsTable;
 
     return resultFromQuery;
   } catch (error) {
@@ -76,7 +111,50 @@ export async function fetchFilteredProfesors(
   }
 }
 
-export async function fetchFilteredStudents(query: string) {
+export async function fetchFilteredStudents(query: string, page: number) {
+  noStore();
+  try {
+    const offset = (page - 1) * MAX_RESULTS_SEARCH;
+
+    const regExp = new RegExp(query, "i");
+    const filter =
+      query === ""
+        ? {}
+        : {
+            $or: [...getPersonQueryFilters(regExp)],
+          };
+    await dbConnect();
+    const students = await Student.find(filter)
+      .skip(offset)
+      .limit(MAX_RESULTS_SEARCH)
+      .populate("tutor_id", "name");
+
+    const mapped: StudentTable = students.map((s) => {
+      const { name, lastname, email, ci, age, address, phone, sex } = s;
+      const tutor = s.tutor_id as { _id: string; name: string };
+      // TODO: fix this tipo error
+
+      return {
+        id: s.id,
+        name,
+        lastname,
+        email,
+        ci,
+        age,
+        address,
+        phone,
+        sex,
+        tutor,
+      };
+    });
+
+    return mapped;
+  } catch (error) {
+    throw new Error("Error cargando los estudiantes");
+  }
+}
+
+export async function fecthStudentPages(query: string) {
   const regExp = new RegExp(query, "i");
   const filter =
     query === ""
@@ -84,18 +162,71 @@ export async function fetchFilteredStudents(query: string) {
       : {
           $or: [...getPersonQueryFilters(regExp)],
         };
-  await dbConnect();
   try {
-    // Example: Fetching students with age less than 25 and limiting the result
-    const filteredStudents =
-      await Student.find(filter).limit(MAX_RESULTS_SEARCH);
+    await dbConnect();
+    const totalDocs = await Student.countDocuments(filter);
+    console.log(`Docs: ${totalDocs}`);
 
-    return filteredStudents;
+    return Math.ceil(totalDocs / MAX_RESULTS_SEARCH);
+  } catch (error) {}
+}
+
+export async function fetchStudentById(id: string) {
+  // const oid = new Schema.Types.ObjectId(id);
+  try {
+    await dbConnect();
+    const student = (await Student.findById(id).populate("tutor_id", [
+      "name",
+      "id",
+    ])) as any;
+
+    const studentObj = student.toJSON();
+
+    console.log(studentObj);
+
+    if (student) {
+      const mapedStudent = {
+        name: studentObj.name,
+        lastname: studentObj.lastname,
+        email: studentObj.email,
+        address: studentObj.address,
+        age: studentObj.age,
+        ci: studentObj.ci,
+        id: studentObj.id,
+        phone: studentObj.phone,
+        sex: studentObj.sex,
+        tutor: {
+          _id: student?.tutor_id?._id.toString(), //TODO: fix this typo errors
+          name: student?.tutor_id?.name,
+        },
+      };
+      return mapedStudent;
+    }
+
+    throw new Error("Estudiante no encontrado");
   } catch (error) {
-    // Handle errors here
-    console.error("Error fetching filtered students:", error);
-    throw error;
+    const err = error as Error;
+    throw new Error(`Error: ${err.name}. ${err.message}`);
   }
+}
+
+export async function fecthProfesorsPages(query: string) {
+  const regExp = new RegExp(query, "i");
+  const filter =
+    query === ""
+      ? {}
+      : {
+          $or: [
+            ...getPersonQueryFilters(regExp),
+            { academic_rank: { $regex: regExp } },
+          ],
+        };
+  try {
+    await dbConnect();
+    const totalDocs = await Profesor.countDocuments(filter);
+
+    return Math.ceil(totalDocs / MAX_RESULTS_SEARCH);
+  } catch (error) {}
 }
 
 // Define a generic function to get a document by ID
@@ -124,6 +255,59 @@ export async function getTotalPages<T extends Document>(
   } catch (error) {
     // Handle the error, e.g., log it or throw an exception
     console.error("Error calculating total pages:", error);
+    throw error;
+  }
+}
+
+// Courts
+async function getAllCourtsFormatted() {
+  try {
+    // Use the Mongoose model to find all courts in the database and populate the 'profesor' field
+    const courts = await Court.find({}).populate("members.profesor");
+
+    // Map the courts to the desired format
+    const formattedCourts: Court[] = courts.map((court) => ({
+      id: court._id.toString(),
+      name: court.name,
+      members: court.members.map(
+        (member: {
+          profesor: { _id: Types.ObjectId; name: string };
+          role: CourtRole;
+        }) => ({
+          profesor: member.profesor._id.toString(),
+          role: member.role,
+        })
+      ),
+    }));
+
+    return formattedCourts;
+  } catch (error) {
+    // Handle errors, such as logging or throwing an exception
+    console.error("Error while fetching courts:", error);
+    throw error;
+  }
+}
+
+async function createCourt(
+  name: string,
+  members: { profesor: string; role: CourtRole }[]
+) {
+  try {
+    //  Exctract the for data
+
+    // Create a new court
+    const newCourt = new Court({
+      name,
+      members,
+    });
+
+    // Save the new court to the database
+    const savedCourt = await newCourt.save();
+
+    return savedCourt;
+  } catch (error) {
+    // Handle errors, such as logging or throwing an exception
+    console.error("Error while creating a new court:", error);
     throw error;
   }
 }

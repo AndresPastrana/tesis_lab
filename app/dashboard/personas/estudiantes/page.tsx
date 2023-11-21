@@ -1,10 +1,17 @@
 // import Create from "@/app/ui/personas/";
+import { fecthStudentPages } from "@/app/lib/data/data";
 import Breadcrumbs, { CrumbItem, CrumbsItems } from "@/app/ui/Breadcrumbs";
+import Pagination from "@/app/ui/pagination";
 import SearchBar from "@/app/ui/personas/SearchBar";
+import TableStudents from "@/app/ui/personas/estudiantes/TableStudents";
 import Create from "@/app/ui/personas/profesores/Create";
-import React from "react";
+import React, { Suspense } from "react";
 
-const page = async () => {
+const page = async ({
+  searchParams,
+}: {
+  searchParams: { query?: string; page?: number };
+}) => {
   const items: CrumbItem[] = [
     { label: "Dashboard", href: "/dashboard" },
     {
@@ -15,6 +22,10 @@ const page = async () => {
       label: "Estudiantes",
     },
   ];
+
+  const query = searchParams?.query || "";
+  const currentPage = Number(searchParams?.page) || 1;
+  const totalPages = (await fecthStudentPages("")) as number;
   return (
     <>
       <Breadcrumbs items={items} />
@@ -27,9 +38,19 @@ const page = async () => {
         />
       </div>
       <div className="bg-gray-50 rounded-sm mt-4">
-        <div>Table here</div>
+        <Suspense
+          fallback={
+            <div className="flex justify-center py-10 min-h-[630px] lg:min-h-[590px]">
+              <span className="text-center loading loading-spinner text-green-700"></span>
+            </div>
+          }
+        >
+          <TableStudents query={query} page={currentPage} />
+        </Suspense>
 
-        <div className="flex justify-center my-4">Pagination here</div>
+        <div className="mt-5 flex w-full justify-center">
+          <Pagination totalPages={totalPages} />
+        </div>
       </div>
     </>
   );
