@@ -1,10 +1,8 @@
 "use client";
 import { useFormState } from "react-dom";
-import { RangoAcademico } from "@/app/const";
-import { addProfesor, ediProfesor } from "@/app/lib/actions";
+import { ediProfesor } from "@/app/lib/actions";
 import FormPersonalInfo from "../FormPersonalInfo";
 import { Cancel, Save } from "./FormsButtons";
-import ErrorMessage from "../ErrorMessage";
 import { ProfesorForm } from "@/app/lib/definitions";
 import FormProfesorInfo from "./FormProfesorInfo";
 

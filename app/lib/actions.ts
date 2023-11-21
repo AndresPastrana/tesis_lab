@@ -118,8 +118,8 @@ export async function ediProfesor(
       message: `${err.name} ${err.message}`,
     };
   }
-  revalidatePath("/dashboard/personas/profesores");
-  redirect("/dashboard/personas/profesores");
+  revalidatePath("/dashboard/personas/estudiantes");
+  redirect("/dashboard/personas/estudiantes");
 }
 
 export async function deleteProfesorById(id: string): Promise<void> {
@@ -181,4 +181,64 @@ export async function addStudent(
   }
   revalidatePath("/dashboard/personas/estudiantes");
   redirect("/dashboard/personas/estudiantes");
+}
+
+export async function editStudent(
+  id: string,
+  _prevState: StudentFormState,
+  formData: FormData
+) {
+  console.log(id);
+  console.log(formData);
+
+  try {
+    const validation = isValidStudentInfo(formData);
+
+    if (!validation.success) {
+      return {
+        errors: validation.error.flatten().fieldErrors,
+        message: "Campos incorrectos. Fallo al crear el actualizar estudiante ",
+      };
+    }
+
+    const { tutor, ci, email, ...rest } = validation.data;
+    await Promise.all([
+      isCiUniqueExclude(ci, id),
+      isEmailUniqueExclude(email, id),
+    ]);
+
+    await Student.findByIdAndUpdate(id, {
+      tutor_id: tutor,
+      email,
+      ci,
+      ...rest,
+    });
+  } catch (error) {
+    const err = error as Error;
+    return {
+      message: `${err.name} ${err.message}`,
+    };
+  }
+
+  revalidatePath("/dashboard/personas/estudiantes");
+  redirect("/dashboard/personas/estudiantes");
+}
+
+export async function deleteStudentById(id: string): Promise<void> {
+  try {
+    await dbConnect();
+    // Use the Profesor model to find and delete the Profesor by ID
+    const deletedStudent = await Student.findByIdAndDelete(id);
+    // If the Profesor was not found, you might want to handle that case
+    if (!deletedStudent) {
+      // You can throw an error, log a message, or handle it in a way that fits your application
+      throw new Error(`Estudiante with ID ${id} not found`);
+    }
+
+    revalidatePath("/dashboard/personas/estudiantes");
+  } catch (error) {
+    console.log(error);
+
+    throw new Error(`Error al eliminar el profesor`);
+  }
 }

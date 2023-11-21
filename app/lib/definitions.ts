@@ -86,7 +86,7 @@ export interface ProfesorType {
 }
 
 export interface StudentType {
-  tutor_id: string | Schema.Types.ObjectId;
+  tutor_id: string | Schema.Types.ObjectId | { _id: string; name: string };
   // academic_doc_id: string | Schema.Types.ObjectId;
 }
 
@@ -115,3 +115,4 @@ export type EventSchemaType = Omit<Event, "court_id" | "participants"> & {
 };
 
 export type ProfesorForm = PersonType & ProfesorType;
+export type StudentForm = PersonType & StudentType;

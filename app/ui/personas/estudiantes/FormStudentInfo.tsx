@@ -9,7 +9,7 @@ const FormEstudentInfo = async ({
   studentInfo,
 }: {
   state: StudentFormState;
-  studentInfo?: StudentType;
+  studentInfo?: { tutor: { _id: string; name: string } };
   profesores: { id: string; name: string }[];
 }) => {
   return (
@@ -23,7 +23,7 @@ const FormEstudentInfo = async ({
             Tutor{" "}
           </label>
           <select
-            defaultValue={studentInfo?.tutor_id as string}
+            defaultValue={studentInfo?.tutor._id}
             name="tutor"
             id="tutor"
             className="select select-bordered w-full  focus:outline-green-700 focus:outline-2 focus:border-none  max-w-full sm:max-w-lg"
