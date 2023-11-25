@@ -1,7 +1,8 @@
 "use server";
+// import { signIn } from "@/auth";
 import { isValidProfesorInfo, isValidStudentInfo } from "../helpers/validators";
 import { caluculateAge } from "../helpers/age";
-import { Profesor, Student } from "./models/Mongoose";
+import { Profesor, Student, User } from "./models/Mongoose";
 import dbConnect from "./dbConnect";
 import { redirect } from "next/navigation";
 import {
@@ -240,5 +241,21 @@ export async function deleteStudentById(id: string): Promise<void> {
     console.log(error);
 
     throw new Error(`Error al eliminar el profesor`);
+  }
+}
+
+// Auth
+export async function isValidCredentials(username: string, password: string) {
+  try {
+    // TODO: Get the user by id
+    await dbConnect();
+    const user = await User.findOne({ username });
+
+    if (!user) throw new Error("Inavlid Credentials");
+
+    return user;
+    // await signIn("credentials", Object.fromEntries(formData));
+  } catch (error) {
+    throw new Error("Inavlid Credentials");
   }
 }

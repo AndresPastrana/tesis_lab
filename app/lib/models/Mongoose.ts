@@ -1,18 +1,56 @@
+import { IsoDate } from "minio";
 import mongoose, { Model } from "mongoose";
 import {
   CourtType,
+  EvaluationType,
   PersonType,
   ProfesorType,
   StudentType,
+  TesisProjectType,
+  UserType,
 } from "../definitions";
-import { CourtRole, RangoAcademico, Sex } from "@/app/const";
+import {
+  CourtRole,
+  EvalStatus,
+  EvalType,
+  RangoAcademico,
+  Sex,
+  TesisProjectStatus,
+  UserRole,
+} from "@/app/const";
 
+interface User extends UserType, mongoose.Document {}
 interface Person extends PersonType, mongoose.Document {}
-interface Profesor extends Person, ProfesorType {}
-interface Student extends Person, StudentType {}
-interface Court extends mongoose.Document, CourtType {}
+interface Profesor extends ProfesorType, mongoose.Document {}
+interface Student extends StudentType, mongoose.Document {}
+interface Court extends CourtType, mongoose.Document {}
+interface TesisProject extends TesisProjectType, mongoose.Document {}
+interface Evaluation extends EvaluationType, mongoose.Document {}
 
+///////////////////////////////////      Schemas
+
+/////////////////////////////
+
+const UserSchema = new mongoose.Schema<User>({
+  isActive: { type: Boolean, require: false, default: true },
+  role: {
+    type: String,
+    enum: Object.values(UserRole),
+    required: true,
+  },
+  password: { type: String, required: true },
+  username: {
+    type: String,
+    required: true,
+  },
+});
 const PersonSchema = new mongoose.Schema<Person>({
+  user_id: {
+    type: mongoose.Types.ObjectId,
+    ref: "User",
+    require: true,
+    readonly: true,
+  },
   ci: { type: String, maxlength: 11, required: true },
   name: { type: String, required: true, lowercase: true },
   lastname: { type: String, required: true, lowercase: true },
@@ -21,6 +59,11 @@ const PersonSchema = new mongoose.Schema<Person>({
   email: { type: String, required: true, trim: true },
   phone: { type: String, required: true, trim: true },
   sex: { type: String, enum: Object.values(Sex), required: true },
+  ancient: {
+    type: Boolean,
+    required: false,
+    default: false,
+  },
 });
 
 const ProfesorSchema = new mongoose.Schema<Profesor>(
@@ -43,17 +86,11 @@ const ProfesorSchema = new mongoose.Schema<Profesor>(
 
 const StudentSchema = new mongoose.Schema<Student>(
   {
-    tutor_id: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: "Profesor",
-    }, // Assuming there is a Tutor model
-    // academic_doc_id: {
-    //   type: mongoose.Schema.Types.ObjectId,
-    //   required: true,
-    //   ref: "AcademicDocument",
-    // }, // Assuming there is an AcademicDocument model
-    // Add other properties based on the StudentType interface
+    language_certificate: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
   },
   {
     methods: {
@@ -82,6 +119,98 @@ const CourtSchema = new mongoose.Schema<Court>(
         return { id: _id.toString(), ...rest };
       },
     },
+  }
+);
+
+const TesisProjectSchema = new mongoose.Schema<TesisProject>(
+  {
+    tutors: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "Profesor" }],
+      required: false,
+    },
+    student: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Student",
+      required: false,
+    },
+    topic: {
+      type: String,
+      required: true,
+      maxlength: 20,
+    },
+    general_target: {
+      type: String,
+      required: true,
+      maxlength: 30,
+    },
+    scientific_problem: {
+      type: String,
+      required: true,
+      maxlength: 300,
+    },
+    functional_requirements: {
+      type: [{ type: String }],
+      required: false,
+      default: [],
+    },
+    status: {
+      type: String,
+      enum: Object.values(TesisProjectStatus),
+      required: false,
+      default: TesisProjectStatus.Pending,
+    },
+    approval: {
+      type: {
+        isApprove: { type: Boolean, required: false, default: false },
+        recommendations: { type: [String], required: false, default: [] },
+        approvedBy: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Profesor",
+          required: false,
+        },
+        date: { type: Date },
+      },
+    },
+    ancient: {
+      type: Boolean,
+      required: false,
+      default: false,
+    },
+  },
+  {
+    methods: {
+      toJSON: function (this) {
+        const { __v, _id, id, ...rest } = this.toObject();
+        return { id: _id.toString(), ...rest };
+      },
+    },
+  }
+);
+
+const EvaluationSchema = new mongoose.Schema<Evaluation>(
+  {
+    student: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Student",
+      required: true,
+    },
+    type: { type: String, enum: Object.values(EvalType) },
+    status: { type: String, enum: Object.values(EvalStatus) },
+    date: { type: Date, required: true },
+    file: { type: String, required: true },
+    description: { type: String, required: true },
+    score: { type: Number, required: false, default: null },
+    recoms: { type: [String], required: false, default: [] },
+    ancient: { type: Boolean, required: true },
+  },
+  {
+    methods: {
+      toJSON: function (this) {
+        const { __v, _id, id, ...rest } = this.toObject();
+        return { id: _id.toString(), ...rest };
+      },
+    },
+    timestamps: true,
   }
 );
 
@@ -131,7 +260,7 @@ const CourtSchema = new mongoose.Schema<Court>(
 //   ],
 // });
 
-// Models Here
+///////////////////////////////  Models ////////////////////////////////////////
 
 export const Person =
   mongoose.models.Person || mongoose.model<Person>("Person", PersonSchema);
@@ -146,3 +275,14 @@ export const Student: Model<Student> =
 
 export const Court =
   mongoose.models.Court || mongoose.model<Court>("Court", CourtSchema);
+
+export const TesisProject =
+  mongoose.models.TesisProject ||
+  mongoose.model<TesisProjectType>("TesisProject", TesisProjectSchema);
+
+export const Evaluation =
+  mongoose.models.Evaluation ||
+  mongoose.model<EvaluationType>("Evaluation", EvaluationSchema);
+
+export const User =
+  mongoose.models.User || mongoose.model<UserType>("User", UserSchema);

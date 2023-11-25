@@ -64,3 +64,24 @@ export enum RangoAcademico {
   PROFESOR_ASOCIADO = "Profesor Asociado",
   PROFESOR = "Profesor",
 }
+
+export enum TesisProjectStatus {
+  Pending = "pending",
+  Approved = "approved",
+  Closed = "closed",
+}
+
+export enum EvalType {
+  CorteEvaluativo = "corte evaluativo",
+  Predefensa = "predefensa",
+}
+
+export enum EvalStatus {
+  Open = "open",
+  Close = "close",
+}
+export enum UserRole {
+  Profesor = "profesor",
+  Student = "student",
+  Admin = "admin",
+}

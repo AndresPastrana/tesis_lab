@@ -3,47 +3,82 @@ import {
   CourtRole,
   Degree,
   Department,
+  EvalStatus,
+  EvalType,
   FieldOfStudy,
   Institutions,
   RangoAcademico,
+  TesisProjectStatus,
+  UserRole,
 } from "../const";
-
-interface Event {
-  id: string;
-  court_id: string; // Reference to Court model
-  date: Date;
-  title: string;
-  participants: {
-    student_id: string; // Reference to Student model
-    evaluated: boolean;
-  }[];
-  status: "open" | "in-progress" | "closed";
-  type: "defense" | "pre-defense" | "thesis-workshop";
-}
-
-interface TesisDefense extends Event {
-  type: "defense";
-  criteria: string[]; // Reference to Criterion model
-  evaluations: {
-    student_id: string; // Reference to Student model
-    criteriaScores: Record<string, number>;
-    totalScore: number;
-    documentUrl?: string; // Optional for defense
-  }[];
-}
-interface TesisWorkShop extends Event {
-  type: "thesis-workshop";
-  objectives: string[];
-  observations: {
-    student_id: string; // Reference to Student model
-    comments: string[];
-  }[];
-}
 
 type CourtMember = {
   profesor: string | Schema.Types.ObjectId;
   role: CourtRole;
 };
+export interface UserType {
+  isActive: Boolean;
+  role: UserRole;
+  username: string;
+  password: string;
+}
+
+export interface PersonType {
+  user_id: Schema.Types.ObjectId;
+  ci: string; // String, Not Null
+  name: string; // String, Not Null
+  lastname: string; // String, Not Null
+  address: string; // String, Not Null
+  email: string; // String, Not Null
+  phone: string; // String, Not Null
+  sex: string; // String, Not Null
+  age: number; // Number, Not Null
+  ancient: boolean;
+}
+
+export interface ProfesorType extends PersonType {
+  academic_rank: RangoAcademico;
+}
+
+export interface StudentType extends PersonType {
+  language_certificate: boolean;
+}
+
+export interface CourtType {
+  name: string; // Nombre del tribunal
+  members: CourtMember[]; // Lista de profesores que forman parte del tribunal y su role
+}
+
+export interface TesisProjectType {
+  tutors: Array<Schema.Types.ObjectId>;
+  student: Schema.Types.ObjectId;
+  topic: string; //required
+  general_target: string; //required
+  scientific_problem: string; //required
+  functional_requirements: string[];
+  status: TesisProjectStatus; //not required
+  approval: {
+    isApprove: boolean;
+    recommendations: String[];
+    approvedBy: Schema.Types.ObjectId | null;
+    date: Date | null;
+  };
+
+  ancient: boolean; //not required
+}
+
+export interface EvaluationType {
+  student: Schema.Types.ObjectId;
+  type: EvalType;
+  status: EvalStatus;
+  date: { type: Date };
+  file: string;
+  description: string;
+  score: number; // Assuming it can be null
+  recoms: string[];
+  ancient: boolean;
+}
+
 export type AcademicDocType = {
   id: string;
   // Other's collections references
@@ -69,49 +104,6 @@ export type AcademicDocType = {
   defenseDate: Date;
 };
 
-export interface PersonType {
-  ci: string; // String, Not Null
-  name: string; // String, Not Null
-  lastname: string; // String, Not Null
-  address: string; // String, Not Null
-  email: string; // String, Not Null
-  phone: string; // String, Not Null
-  sex: string; // String, Not Null
-  age: number; // Number, Not Null
-}
-
-// Define the ProfesorType interface
-export interface ProfesorType {
-  academic_rank: RangoAcademico;
-}
-
-export interface StudentType {
-  tutor_id: string | Schema.Types.ObjectId | { _id: string; name: string };
-  // academic_doc_id: string | Schema.Types.ObjectId;
-}
-
-export interface CourtType {
-  name: string; // Nombre del tribunal
-  members: CourtMember[]; // Lista de profesores que forman parte del tribunal y su role
-}
-
-type ThesisWorkshopType = {
-  id: string;
-  court_id: string; // Tribunal asignado
-  participants: string[];
-  title: string;
-  date: Date; //When current date u date all the tesis workoshp with the status = "open" -> "in=progress"   current date = date+1 "in-progress" -> "closed"
-  objectives: string[];
-  status: "open" | "in-progress" | "closed";
-};
-
-export type EventSchemaType = Omit<Event, "court_id" | "participants"> & {
-  court_id: Schema.Types.ObjectId;
-  participants: {
-    student_id: Schema.Types.ObjectId; // Reference to Student model
-    evaluated: boolean;
-  }[];
-};
-
+//////////////////////////  Types for ui //////////////////////
 export type ProfesorForm = PersonType & ProfesorType;
 export type StudentForm = PersonType & StudentType;
